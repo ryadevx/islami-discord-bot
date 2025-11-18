@@ -7,7 +7,7 @@ A Discord bot that provides automatic prayer time reminders and sends a random H
 ## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/n4m3less07/islami-discord-bot
+git clone https://github.com/ryadevx/islami-discord-bot
 cd islamic-discord-bot
 
 cp .env.example .env
