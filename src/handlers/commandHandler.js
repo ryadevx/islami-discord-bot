@@ -11,9 +11,7 @@ class CommandHandler {
     
     this.commands = {
       '$wa': this.handleHadithCommand.bind(this),
-      '$prayer': this.handlePrayerCommand.bind(this),
-      '$pt': this.handlePrayerCommand.bind(this),
-      '$test-prayer': this.handleTestPrayer.bind(this),
+
     };
   }
 
