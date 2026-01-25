@@ -6,16 +6,19 @@ class ReminderService {
   constructor(client) {
     this.client = client;
     this.scheduledJobs = [];
+    this.dailyResetJob = null;
   }
 
   async setupPrayerReminders() {
-    this.clearJobs();
-
     const times = await getPrayerTimes();
+
+    // ❌ Do NOT clear jobs if API failed
     if (!times) {
-      console.error('could not fetch prayer times');
+      console.error('❌ Prayer times unavailable, keeping existing schedule');
       return;
     }
+
+    this.clearJobs();
 
     const prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
@@ -28,7 +31,7 @@ class ReminderService {
 
     this.scheduleDailyReset();
 
-    console.log('real prayer reminders scheduled');
+    console.log('✅ Prayer reminders scheduled');
   }
 
   schedulePrayerReminder(prayer, time) {
@@ -47,30 +50,32 @@ class ReminderService {
     );
 
     this.scheduledJobs.push(job);
-
-    console.log(`reminder for ${prayer} scheduled at ${time}`);
+    console.log(`⏰ ${prayer} scheduled at ${time}`);
   }
 
   async sendPrayerReminder(prayer, time) {
     try {
       const channel = this.client.channels.cache.get(config.CHANNEL_ID);
       if (!channel) {
-        console.error('channel not found');
+        console.error('❌ Channel not found');
         return;
       }
 
       await channel.send(`🕌 It's time for **${prayer}** prayer (${time})`);
-      console.log(`📢 sent ${prayer} prayer reminder`);
+      console.log(`📢 Sent ${prayer} reminder`);
     } catch (err) {
-      console.error('error sending reminder:', err.message);
+      console.error('❌ Error sending reminder:', err.message);
     }
   }
 
   scheduleDailyReset() {
-    cron.schedule(
+    // ✅ Prevent duplicate midnight cron jobs
+    if (this.dailyResetJob) return;
+
+    this.dailyResetJob = cron.schedule(
       '0 0 * * *',
       async () => {
-        console.log('midnight reset refreshing prayer times');
+        console.log('🌙 Midnight: refreshing prayer schedule');
         await this.setupPrayerReminders();
       },
       {
