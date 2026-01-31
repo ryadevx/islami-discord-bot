@@ -1,10 +1,10 @@
 require('dotenv').config();
 
 const { Client, GatewayIntentBits } = require('discord.js');
-const config = require('./src/config/config');
-const ReminderService = require('./src/services/reminderService');
+const config = require('.src/config/config');
+const ReminderService = require('.src/services/reminderService');
 const CommandHandler = require('./src/handlers/commandHandler');
-const { initRedis } = require('./src/services/redis');
+const { initRedis } = require('./src/config/redis');
 
 (async () => {
   // 🔥 Initialize Redis safely (never crashes bot)
