@@ -1,56 +1,34 @@
-const { createClient } = require("redis");
+const { createClient } = require('redis');
 
-let redisClient = null;
+let client;
 
 async function initRedis() {
-  if (!process.env.REDIS_URL) {
-    console.warn("⚠️ REDIS_URL not set → Redis disabled");
-    return null;
-  }
+  if (client) return client;
 
-  redisClient = createClient({
+  client = createClient({
     url: process.env.REDIS_URL,
     socket: {
-      reconnectStrategy: (retries) => {
-        console.warn(`🔁 Redis reconnect attempt #${retries}`);
-        return Math.min(retries * 200, 2000);
-      },
-      keepAlive: 5000,
-    },
+      reconnectStrategy: retries => {
+        console.log(`🔁 Redis reconnect attempt #${retries}`);
+        return Math.min(retries * 100, 3000);
+      }
+    }
   });
 
-  // 🔥 CRITICAL: never crash on Redis errors
-  redisClient.on("error", (err) => {
-    console.error("❌ Redis error (handled):", err.message);
+  client.on('connect', () => {
+    console.log('🔌 Redis socket connected');
   });
 
-  redisClient.on("connect", () => {
-    console.log("🔌 Redis socket connected");
+  client.on('ready', () => {
+    console.log('✅ Redis ready');
   });
 
-  redisClient.on("ready", () => {
-    console.log("✅ Redis ready");
+  client.on('error', (err) => {
+    console.error('❌ Redis error (handled):', err.message);
   });
 
-  redisClient.on("end", () => {
-    console.warn("⚠️ Redis connection closed");
-  });
-
-  try {
-    await redisClient.connect();
-  } catch (err) {
-    console.error("❌ Redis initial connection failed:", err.message);
-    redisClient = null;
-  }
-
-  return redisClient;
+  await client.connect();
+  return client;
 }
 
-function getRedis() {
-  return redisClient;
-}
-
-module.exports = {
-  initRedis,
-  getRedis,
-};
+module.exports = { initRedis };
