@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { Client, GatewayIntentBits } = require('discord.js');
-const config = require('.src/config/config');
+const config = require('./src/config/config');
 const ReminderService = require('.src/services/reminderService');
 const CommandHandler = require('./src/handlers/commandHandler');
 const { initRedis } = require('./src/config/redis');
