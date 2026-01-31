@@ -1,15 +1,16 @@
 const axios = require('axios');
 const config = require('../config/config');
+const redis = require('../config/redis');
 
-let cachedTimes = null;
-let lastFetchDate = null;
+const CACHE_KEY = 'prayer_times_algiers';
+const CACHE_TTL = 60 * 60 * 24; // 24 hours
 
 async function getPrayerTimes() {
-  const today = new Date().toDateString();
+  const cached = await redis.get(CACHE_KEY);
 
-  // ✅ Use cached times if already fetched today
-  if (cachedTimes && lastFetchDate === today) {
-    return cachedTimes;
+  if (cached) {
+    console.log('🧠 Using Redis cached prayer times');
+    return JSON.parse(cached);
   }
 
   try {
@@ -24,20 +25,19 @@ async function getPrayerTimes() {
       }
     );
 
-    cachedTimes = response.data.data.timings;
-    lastFetchDate = today;
+    const timings = response.data.data.timings;
 
-    console.log('🕌 Prayer times fetched successfully');
-    return cachedTimes;
+    // 3️⃣ Store in Redis
+    await redis.set(
+      CACHE_KEY,
+      JSON.stringify(timings),
+      { EX: CACHE_TTL }
+    );
+
+    console.log('🕌 Prayer times fetched & cached in Redis');
+    return timings;
   } catch (err) {
     console.error('❌ Failed to fetch prayer times:', err.message);
-
-    // ✅ Fallback to cached data
-    if (cachedTimes) {
-      console.warn('⚠️ Using cached prayer times');
-      return cachedTimes;
-    }
-
     return null;
   }
 }
