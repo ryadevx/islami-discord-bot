@@ -1,11 +1,14 @@
 const axios = require('axios');
 const config = require('../config/config');
-const redis = require('../config/redis');
+const { getRedis } = require('../config/redis');
 
 const CACHE_KEY = 'prayer_times_algiers';
 const CACHE_TTL = 60 * 60 * 24; // 24 hours
 
 async function getPrayerTimes() {
+  const redis = getRedis(); // ✅ get the actual Redis client
+
+  // 1️⃣ Try cache
   const cached = await redis.get(CACHE_KEY);
 
   if (cached) {
@@ -14,6 +17,7 @@ async function getPrayerTimes() {
   }
 
   try {
+    // 2️⃣ Fetch from API
     const response = await axios.get(
       'https://api.aladhan.com/v1/timingsByCity',
       {
