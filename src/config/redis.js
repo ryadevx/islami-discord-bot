@@ -1,36 +1,37 @@
 const { createClient } = require('redis');
 
-let redis;
+let redisClient;
 
 async function initRedis() {
-  if (redis) return redis;
+  if (redisClient) return redisClient;
 
-  const url = process.env.REDIS_URL;
-  if (!url) {
-    throw new Error('❌ REDIS_URL is missing');
-  }
-
-  redis = createClient({
-    url,
+  redisClient = createClient({
+    url: process.env.REDIS_URL,
     socket: {
       tls: true,
-      rejectUnauthorized: false, // REQUIRED for Upstash
-      reconnectStrategy: (retries) => {
-        console.log(`🔁 Redis reconnect attempt #${retries}`);
-        return Math.min(retries * 300, 3000);
-      },
+      rejectUnauthorized: false,
     },
   });
 
-  redis.on('connect', () => console.log('🔌 Redis connected'));
-  redis.on('ready', () => console.log('✅ Redis ready'));
-  redis.on('end', () => console.log('⚠️ Redis connection closed'));
-  redis.on('error', (err) =>
-    console.error('❌ Redis error (handled):', err.message)
-  );
+  redisClient.on('error', (err) => {
+    console.error('❌ Redis error (handled):', err.message);
+  });
 
-  await redis.connect();
-  return redis;
+  redisClient.on('ready', () => {
+    console.log('✅ Redis ready');
+  });
+
+  await redisClient.connect();
+  console.log('🔌 Redis connected');
+
+  return redisClient;
 }
 
-module.exports = { initRedis };
+function getRedis() {
+  if (!redisClient) {
+    throw new Error('Redis not initialized. Call initRedis() first.');
+  }
+  return redisClient;
+}
+
+module.exports = { initRedis, getRedis };
