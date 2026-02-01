@@ -2,12 +2,11 @@ require('dotenv').config();
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const config = require('./src/config/config');
+const { initRedis } = require('./src/config/redis');
 const ReminderService = require('./src/services/reminderService');
 const CommandHandler = require('./src/handlers/commandHandler');
-const { initRedis } = require('./src/config/redis');
 
 (async () => {
-  // 🔥 Initialize Redis safely (never crashes bot)
   await initRedis();
 
   const client = new Client({
@@ -21,12 +20,12 @@ const { initRedis } = require('./src/config/redis');
   const commandHandler = new CommandHandler(client);
 
   client.once('ready', async () => {
-    console.log(`logged in as ${client.user.tag}`);
+    console.log(`🤖 Logged in as ${client.user.tag}`);
 
     const reminderService = new ReminderService(client);
     await reminderService.setupPrayerReminders();
 
-    console.log('bot is ready and prayer reminders are active!');
+    console.log('✅ Bot is fully ready');
   });
 
   client.on('messageCreate', async (message) => {
@@ -34,5 +33,5 @@ const { initRedis } = require('./src/config/redis');
     await commandHandler.handleMessage(message);
   });
 
-  await client.login(config.DISCORD_TOKEN);
+  client.login(config.DISCORD_TOKEN);
 })();
